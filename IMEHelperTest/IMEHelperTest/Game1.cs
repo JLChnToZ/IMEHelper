@@ -38,7 +38,11 @@ namespace IMEHelperTest {
         protected override void Initialize() {
             handler = new IMEHandler(this);
 
-            handler.onResultReceived += delegate(object sender, IMEResultEventArgs e) {
+            handler.onCompositionReceived += (s, e) => {
+                System.Diagnostics.Debug.Print("Read string: {0} @{1} -> {2}", handler.Composition, handler.CompositionCursorPos, handler.Result);
+            };
+
+            handler.onResultReceived += (s, e) => {
                 switch ((int)e.result) {
                     case 8:
                         if (content.Length > 0)

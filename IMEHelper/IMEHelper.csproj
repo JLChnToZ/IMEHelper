@@ -93,8 +93,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CharMessageFilter.cs" />
     <Compile Include="IME.cs" />
     <Compile Include="IMENativeWindow.cs" />
+    <Compile Include="IMMCompositionResultHandler.cs" />
     <Compile Include="IMMNativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

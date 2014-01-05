@@ -30,12 +30,18 @@ namespace JLChnToZ.IMEHelper {
         public char result { get; private set; }
     }
 
-    internal sealed class IMENativeWindow : NativeWindow, IDisposable {
-        public string[] _candidates;
-        public StringBuilder _compositionStr;
-        public int _compositionStrLength;
-        public bool _enabled;
-        public uint _pgStart, _pgSize, _pgSel;
+    public sealed class IMENativeWindow : NativeWindow, IDisposable {
+        public bool IsEnabled { get; private set; }
+
+        public IMMCompositionString CompositionString { get; private set; }
+        public IMMCompositionString ResultString { get; private set; }
+
+        public IMMCompositionInt CompositionCursorPos { get; private set; }
+
+        public string[] Candidates { get; private set; }
+        public uint CandidatesPageStart { get; private set; }
+        public uint CandidatesPageSize { get; private set; }
+        public uint CandidatesSelection { get; private set; }
 
         private bool _disposed, _showIMEWin;
 
@@ -43,12 +49,13 @@ namespace JLChnToZ.IMEHelper {
 
         public IMENativeWindow(Game game, bool showDefaultIMEWindow = false) {
             this.Context = IntPtr.Zero;
-            this._candidates = new string[0];
-            this._compositionStr = new StringBuilder();
-            this._compositionStrLength = 0;
+            this.Candidates = new string[0];
+            this.CompositionCursorPos = new IMMCompositionInt(IMM.GCSCursorPos);
+            this.CompositionString = new IMMCompositionString(IMM.GCSCompStr);
+            this.ResultString = new IMMCompositionString(IMM.GCSResultStr);
             this._showIMEWin = showDefaultIMEWindow;
             AssignHandle(game.Window.Handle);
-            Application.AddMessageFilter(new keyFilter());
+            CharMessageFilter.AddFilter();
         }
 
         public event EventHandler onCandidatesReceived;
@@ -56,7 +63,7 @@ namespace JLChnToZ.IMEHelper {
         public event EventHandler<IMEResultEventArgs> onResultReceived;
 
         public void disableIME() {
-            _enabled = false;
+            IsEnabled = false;
             IMM.ImmAssociateContext(Handle, IntPtr.Zero);
         }
 
@@ -68,7 +75,7 @@ namespace JLChnToZ.IMEHelper {
         }
 
         public void enableIME() {
-            _enabled = true;
+            IsEnabled = true;
             IMM.ImmAssociateContext(Handle, Context);
         }
 
@@ -77,23 +84,12 @@ namespace JLChnToZ.IMEHelper {
                 case IMM.ImeSetContext: IMESetContext(ref msg); break;
                 case IMM.InputLanguageChange: return;
                 case IMM.ImeNotify: IMENotify(msg.WParam.ToInt32()); break;
-                case IMM.ImeStartCompostition: ClearComposition(); break;
+                case IMM.ImeStartCompostition: IMEStartComposion(msg.LParam.ToInt32()); break;
                 case IMM.ImeComposition: IMEComposition(msg.LParam.ToInt32()); break;
-                case IMM.ImeEndComposition: ClearComposition(); break;
+                case IMM.ImeEndComposition: IMEEndComposition(msg.LParam.ToInt32()); break;
                 case IMM.Char: CharEvent(msg.WParam.ToInt32()); break;
             }
             base.WndProc(ref msg);
-        }
-
-        private class keyFilter : IMessageFilter {
-            public bool PreFilterMessage(ref Message m) {
-                if (m.Msg == IMM.KeyDown) {
-                    IntPtr intPtr = Marshal.AllocHGlobal(Marshal.SizeOf(m));
-                    Marshal.StructureToPtr(m, intPtr, true);
-                    IMM.TranslateMessage(intPtr);
-                }
-                return false;
-            }
         }
 
         #region IME Message Handlers
@@ -102,6 +98,11 @@ namespace JLChnToZ.IMEHelper {
                 IntPtr ptr = IMM.ImmGetContext(Handle);
                 if (Context == IntPtr.Zero)
                     Context = ptr;
+                CompositionCursorPos.IMEHandle = Context;
+                CompositionString.IMEHandle = Context;
+                ResultString.IMEHandle = Context;
+                if (ptr == IntPtr.Zero && IsEnabled)
+                    enableIME();
                 if (!_showIMEWin)
                     msg.LParam = (IntPtr)0;
             }
@@ -123,14 +124,14 @@ namespace JLChnToZ.IMEHelper {
                 length = IMM.ImmGetCandidateList(Context, 0, pointer, length);
                 IMM.CandidateList cList =
                     (IMM.CandidateList)Marshal.PtrToStructure(pointer, typeof(IMM.CandidateList));
-                _pgSel = cList.dwSelection;
-                _pgStart = cList.dwPageStart;
-                _pgSize = cList.dwPageSize;
+                CandidatesSelection = cList.dwSelection;
+                CandidatesPageStart = cList.dwPageStart;
+                CandidatesPageSize = cList.dwPageSize;
                 if (cList.dwCount > 1) {
-                    _candidates = new string[cList.dwCount];
+                    Candidates = new string[cList.dwCount];
                     for (int i = 0; i < cList.dwCount; i++) {
                         int sOffset = Marshal.ReadInt32(pointer, 24 + 4 * i);
-                        _candidates[i] = Marshal.PtrToStringUni((IntPtr)(pointer.ToInt32() + sOffset));
+                        Candidates[i] = Marshal.PtrToStringUni((IntPtr)(pointer.ToInt32() + sOffset));
                     }
                     if (onCandidatesReceived != null)
                         onCandidatesReceived(this, EventArgs.Empty);
@@ -141,30 +142,32 @@ namespace JLChnToZ.IMEHelper {
         }
 
         private void IMECloseCandidate() {
-            _pgSel = _pgStart = _pgSize = 0;
-            _candidates = new string[0];
+            CandidatesSelection = CandidatesPageStart = CandidatesPageSize = 0;
+            Candidates = new string[0];
             if (onCandidatesReceived != null)
                 onCandidatesReceived(this, EventArgs.Empty);
         }
 
-        private void ClearComposition() {
-            _compositionStr.Clear();
-            _compositionStrLength = 0;
+        private void IMEStartComposion(int lParam) {
+            CompositionString.clear();
+            ResultString.clear();
             if (onCompositionReceived != null)
                 onCompositionReceived(this, EventArgs.Empty);
         }
 
         private void IMEComposition(int lParam) {
-            if ((lParam & IMM.GCSCompStr) == IMM.GCSCompStr) {
-                _compositionStr.Clear();
-                _compositionStrLength = IMM.ImmGetCompositionString(Context,
-                    IMM.GCSCompStr, null, 0);
-                IMM.ImmGetCompositionString(Context,
-                    IMM.GCSCompStr,
-                    _compositionStr, _compositionStrLength);
-                if (onCompositionReceived != null)
-                    onCompositionReceived(this, EventArgs.Empty);
-            }
+            bool result = false;
+            result = result || CompositionString.update(lParam);
+            result = result || CompositionCursorPos.update(lParam);
+            if (result && onCompositionReceived != null)
+                onCompositionReceived(this, EventArgs.Empty);
+        }
+
+        private void IMEEndComposition(int lParam) {
+            CompositionString.clear();
+            ResultString.update(lParam);
+            if (onCompositionReceived != null)
+                onCompositionReceived(this, EventArgs.Empty);
         }
 
         private void CharEvent(int wParam) {

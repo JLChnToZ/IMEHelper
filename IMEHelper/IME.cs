@@ -24,6 +24,7 @@ namespace JLChnToZ.IMEHelper {
     /// </summary>
     public class IMEHandler {
         private IMENativeWindow _nativeWnd;
+        
 
         /// <summary>
         /// 建置函數, 必須在 initialize() 時呼叫
@@ -54,41 +55,46 @@ namespace JLChnToZ.IMEHelper {
         public event EventHandler<IMEResultEventArgs> onResultReceived;
 
         /// <summary>
-        /// 取得所有候選字
+        /// 所有候選字
         /// </summary>
-        public string[] Candidates { get { return _nativeWnd._candidates; } }
+        public string[] Candidates { get { return _nativeWnd.Candidates; } }
 
         /// <summary>
-        /// 取得候選字頁面的選項總數最大值
+        /// 候選字頁面的選項總數最大值
         /// </summary>
-        public uint CandidatesPageSize { get { return _nativeWnd._pgSize; } }
+        public uint CandidatesPageSize { get { return _nativeWnd.CandidatesPageSize; } }
 
         /// <summary>
-        /// 取得當前候選字頁面第一個字的索引值
+        /// 當前候選字頁面第一個字的索引值
         /// </summary>
-        public uint CandidatesPageStart { get { return _nativeWnd._pgStart; } }
+        public uint CandidatesPageStart { get { return _nativeWnd.CandidatesPageStart; } }
 
         /// <summary>
-        /// 取得正在選擇的候選字索引值
+        /// 正在選擇的候選字索引值
         /// </summary>
-        public uint CandidatesSelection { get { return _nativeWnd._pgSel; } }
+        public uint CandidatesSelection { get { return _nativeWnd.CandidatesSelection; } }
 
         /// <summary>
-        /// 取得當前合成字串
+        /// 當前合成字串
         /// </summary>
-        public string Composition {
-            get {
-                if (_nativeWnd._compositionStrLength <= 0) return string.Empty;
-                return _nativeWnd._compositionStr.ToString(0, _nativeWnd._compositionStrLength / 2);
-            }
-        }
+        public string Composition { get { return _nativeWnd.CompositionString.ToString(); } }
+
+        /// <summary>
+        /// 指標位置
+        /// </summary>
+        public int CompositionCursorPos { get { return _nativeWnd.CompositionCursorPos.result; } }
+
+        /// <summary>
+        /// 結果字串
+        /// </summary>
+        public string Result { get { return _nativeWnd.ResultString.ToString(); } }
 
         /// <summary>
         /// 啟用/停用 IME
         /// </summary>
         public bool enabled {
             get {
-                return _nativeWnd._enabled;
+                return _nativeWnd.IsEnabled;
             }
             set {
                 if (value)
