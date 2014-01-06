@@ -25,74 +25,103 @@ namespace JLChnToZ.IMEHelper {
     public class IMEHandler {
         private IMENativeWindow _nativeWnd;
         
-
         /// <summary>
-        /// 建置函數, 必須在 initialize() 時呼叫
+        /// Constructor. Must be called in initialize() function.
         /// </summary>
-        /// <param name="game">遊戲物件</param>
-        /// <param name="showDefaultIMEWindow">是否顯示預設的 IME 視窗</param>
+        /// <param name="game">Game instance</param>
+        /// <param name="showDefaultIMEWindow">Should display system IME windows.</param>
         public IMEHandler(Game game, bool showDefaultIMEWindow = false) {
             this.GameInstance = game;
-            _nativeWnd = new IMENativeWindow(game, showDefaultIMEWindow);
+            _nativeWnd = new IMENativeWindow(game.Window.Handle, showDefaultIMEWindow);
             _nativeWnd.onCandidatesReceived += (s, e) => { if (onCandidatesReceived != null) onCandidatesReceived(s, e); };
             _nativeWnd.onCompositionReceived += (s, e) => { if (onCompositionReceived != null) onCompositionReceived(s, e); };
             _nativeWnd.onResultReceived += (s, e) => { if (onResultReceived != null) onResultReceived(s, e); };
         }
 
         /// <summary>
-        /// 當候選字介面有更動時會呼叫
+        /// Called when the candidates updated
         /// </summary>
         public event EventHandler onCandidatesReceived;
 
         /// <summary>
-        /// 當合成字串有更動時呼叫
+        /// Called when the composition updated
         /// </summary>
         public event EventHandler onCompositionReceived;
 
         /// <summary>
-        /// 當有輸出時呼叫
+        /// Called when a new result character is coming
         /// </summary>
         public event EventHandler<IMEResultEventArgs> onResultReceived;
 
         /// <summary>
-        /// 所有候選字
+        /// Array of the candidates
         /// </summary>
         public string[] Candidates { get { return _nativeWnd.Candidates; } }
 
         /// <summary>
-        /// 候選字頁面的選項總數最大值
+        /// How many candidates should display per page
         /// </summary>
         public uint CandidatesPageSize { get { return _nativeWnd.CandidatesPageSize; } }
 
         /// <summary>
-        /// 當前候選字頁面第一個字的索引值
+        /// First candidate index of current page
         /// </summary>
         public uint CandidatesPageStart { get { return _nativeWnd.CandidatesPageStart; } }
 
         /// <summary>
-        /// 正在選擇的候選字索引值
+        /// The selected canddiate index
         /// </summary>
         public uint CandidatesSelection { get { return _nativeWnd.CandidatesSelection; } }
 
         /// <summary>
-        /// 當前合成字串
+        /// Composition String
         /// </summary>
         public string Composition { get { return _nativeWnd.CompositionString.ToString(); } }
 
         /// <summary>
-        /// 指標位置
+        /// Composition Clause
+        /// </summary>
+        public string CompositionClause { get { return _nativeWnd.CompositionClause.ToString(); } }
+
+        /// <summary>
+        /// Composition Reading String
+        /// </summary>
+        public string CompositionRead { get { return _nativeWnd.CompositionReadString.ToString(); } }
+
+        /// <summary>
+        /// Composition Reading Clause
+        /// </summary>
+        public string CompositionReadClause { get { return _nativeWnd.CompositionReadClause.ToString(); } }
+
+        /// <summary>
+        /// Caret position of the composition
         /// </summary>
         public int CompositionCursorPos { get { return _nativeWnd.CompositionCursorPos.result; } }
 
         /// <summary>
-        /// 結果字串
+        /// Result String
         /// </summary>
         public string Result { get { return _nativeWnd.ResultString.ToString(); } }
 
         /// <summary>
-        /// 啟用/停用 IME
+        /// Result Clause
         /// </summary>
-        public bool enabled {
+        public string ResultClause { get { return _nativeWnd.ResultClause.ToString(); } }
+
+        /// <summary>
+        /// Result Reading String
+        /// </summary>
+        public string ResultRead { get { return _nativeWnd.ResultReadString.ToString(); } }
+
+        /// <summary>
+        /// Result Reading Clause
+        /// </summary>
+        public string ResultReadClause { get { return _nativeWnd.ResultReadClause.ToString(); } }
+
+        /// <summary>
+        /// Enable / Disable IME
+        /// </summary>
+        public bool Enabled {
             get {
                 return _nativeWnd.IsEnabled;
             }
@@ -105,9 +134,13 @@ namespace JLChnToZ.IMEHelper {
         }
 
         /// <summary>
-        /// 遊戲物件
+        /// Game Instance
         /// </summary>
         public Game GameInstance { get; private set; }
+
+        /// <summary>
+        /// Dispose everything
+        /// </summary>
         public void Dispose() {
             _nativeWnd.Dispose();
         }

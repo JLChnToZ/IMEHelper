@@ -19,8 +19,14 @@ using System;
 using System.Text;
 
 namespace JLChnToZ.IMEHelper {
+    /// <summary>
+    /// A class that handles update of ImmGetCompositionString() function
+    /// </summary>
     public abstract class IMMCompositionResultHandler {
         internal IntPtr IMEHandle { get; set; }
+        /// <summary>
+        /// The result flag that this class will be handled
+        /// </summary>
         public int flag { get; private set; }
 
         internal IMMCompositionResultHandler(int flag) {
@@ -39,10 +45,20 @@ namespace JLChnToZ.IMEHelper {
         }
     }
 
+    /// <summary>
+    /// A class that handles update of ImmGetCompositionString() function, which has a string result.
+    /// </summary>
     public class IMMCompositionString : IMMCompositionResultHandler {
         private StringBuilder resultHandler;
+        /// <summary>
+        /// The length of the result.
+        /// </summary>
         public int resultLength { get; private set; }
 
+        /// <summary>
+        /// Gets the string of the result.
+        /// </summary>
+        /// <returns>String of the result</returns>
         public override string ToString() {
             if (resultHandler.Length <= 0) return string.Empty;
             return resultHandler.ToString(0, Math.Min(resultLength / 2, resultHandler.Length));
@@ -64,18 +80,27 @@ namespace JLChnToZ.IMEHelper {
         }
     }
 
+    /// <summary>
+    /// A class that handles update of ImmGetCompositionString() function, which has an integer result.
+    /// </summary>
     public class IMMCompositionInt : IMMCompositionResultHandler {
+        /// <summary>
+        /// The result.
+        /// </summary>
         public int result { get; private set; }
 
         internal IMMCompositionInt(int flag) : base(flag) { }
 
+        /// <summary>
+        /// Gets the string form of the result.
+        /// </summary>
+        /// <returns>Result in string form</returns>
         public override string ToString() {
             return result.ToString();
         }
 
         internal override void update() {
             result = IMM.ImmGetCompositionString(IMEHandle, flag, null, 0);
-            System.Diagnostics.Debug.Print("H:{0}, F:{1}, R:{2}", IMEHandle, flag, result);
         }
     }
 }

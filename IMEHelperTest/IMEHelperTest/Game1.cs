@@ -83,7 +83,7 @@ namespace IMEHelperTest {
 
             KeyboardState ks = Keyboard.GetState();
             if (ks.IsKeyDown(Keys.F12) && lastState.IsKeyUp(Keys.F12)) {
-                handler.enabled = !handler.enabled;
+                handler.Enabled = !handler.Enabled;
             }
             lastState = ks;
 

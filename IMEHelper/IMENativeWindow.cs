@@ -23,50 +23,151 @@ using Microsoft.Xna.Framework;
 
 namespace JLChnToZ.IMEHelper {
 
+    /// <summary>
+    /// Special event arguemnt class stores new character that IME sends in.
+    /// </summary>
     public class IMEResultEventArgs : EventArgs {
+
         internal IMEResultEventArgs(char result) {
             this.result = result;
         }
+
+        /// <summary>
+        /// The result character
+        /// </summary>
         public char result { get; private set; }
     }
 
     public sealed class IMENativeWindow : NativeWindow, IDisposable {
+        /// <summary>
+        /// Gets the state if the IME should be enabled
+        /// </summary>
         public bool IsEnabled { get; private set; }
 
+        /// <summary>
+        /// Composition String
+        /// </summary>
         public IMMCompositionString CompositionString { get; private set; }
+
+        /// <summary>
+        /// Composition Clause
+        /// </summary>
+        public IMMCompositionString CompositionClause { get; private set; }
+
+        /// <summary>
+        /// Composition String Reads
+        /// </summary>
+        public IMMCompositionString CompositionReadString { get; private set; }
+
+        /// <summary>
+        /// Composition Clause Reads
+        /// </summary>
+        public IMMCompositionString CompositionReadClause { get; private set; }
+
+        /// <summary>
+        /// Result String
+        /// </summary>
         public IMMCompositionString ResultString { get; private set; }
 
+        /// <summary>
+        /// Result Clause
+        /// </summary>
+        public IMMCompositionString ResultClause { get; private set; }
+
+        /// <summary>
+        /// Result String Reads
+        /// </summary>
+        public IMMCompositionString ResultReadString { get; private set; }
+
+        /// <summary>
+        /// Result Clause Reads
+        /// </summary>
+        public IMMCompositionString ResultReadClause { get; private set; }
+
+        /// <summary>
+        /// Caret position of the composition
+        /// </summary>
         public IMMCompositionInt CompositionCursorPos { get; private set; }
 
+        /// <summary>
+        /// Array of the candidates
+        /// </summary>
         public string[] Candidates { get; private set; }
+
+        /// <summary>
+        /// First candidate index of current page
+        /// </summary>
         public uint CandidatesPageStart { get; private set; }
+
+        /// <summary>
+        /// How many candidates should display per page
+        /// </summary>
         public uint CandidatesPageSize { get; private set; }
+
+        /// <summary>
+        /// The selected canddiate index
+        /// </summary>
         public uint CandidatesSelection { get; private set; }
 
         private bool _disposed, _showIMEWin;
+        private IntPtr _context;
 
-        private IntPtr Context;
+        /// <summary>
+        /// Called when the candidates updated
+        /// </summary>
+        public event EventHandler onCandidatesReceived;
 
-        public IMENativeWindow(Game game, bool showDefaultIMEWindow = false) {
-            this.Context = IntPtr.Zero;
+        /// <summary>
+        /// Called when the composition updated
+        /// </summary>
+        public event EventHandler onCompositionReceived;
+
+        /// <summary>
+        /// Called when a new result character is coming
+        /// </summary>
+        public event EventHandler<IMEResultEventArgs> onResultReceived;
+
+        /// <summary>
+        /// Constructor, must be called when the window create.
+        /// </summary>
+        /// <param name="handle">Handle of the window</param>
+        /// <param name="showDefaultIMEWindow">True if you want to display the default IME window</param>
+        public IMENativeWindow(IntPtr handle, bool showDefaultIMEWindow = false) {
+            this._context = IntPtr.Zero;
             this.Candidates = new string[0];
             this.CompositionCursorPos = new IMMCompositionInt(IMM.GCSCursorPos);
             this.CompositionString = new IMMCompositionString(IMM.GCSCompStr);
+            this.CompositionClause = new IMMCompositionString(IMM.GCSCompClause);
+            this.CompositionReadString = new IMMCompositionString(IMM.GCSCompReadStr);
+            this.CompositionReadClause = new IMMCompositionString(IMM.GCSCompReadClause);
             this.ResultString = new IMMCompositionString(IMM.GCSResultStr);
+            this.ResultClause = new IMMCompositionString(IMM.GCSResultClause);
+            this.ResultReadString = new IMMCompositionString(IMM.GCSResultReadStr);
+            this.ResultReadClause = new IMMCompositionString(IMM.GCSResultReadClause);
             this._showIMEWin = showDefaultIMEWindow;
-            AssignHandle(game.Window.Handle);
+            AssignHandle(handle);
             CharMessageFilter.AddFilter();
         }
 
-        public event EventHandler onCandidatesReceived;
-        public event EventHandler onCompositionReceived;
-        public event EventHandler<IMEResultEventArgs> onResultReceived;
+        /// <summary>
+        /// Enable the IME
+        /// </summary>
+        public void enableIME() {
+            IsEnabled = true;
+            IMM.ImmAssociateContext(Handle, _context);
+        }
 
+        /// <summary>
+        /// Disable the IME
+        /// </summary>
         public void disableIME() {
             IsEnabled = false;
             IMM.ImmAssociateContext(Handle, IntPtr.Zero);
         }
 
+        /// <summary>
+        /// Dispose everything
+        /// </summary>
         public void Dispose() {
             if (!_disposed) {
                 ReleaseHandle();
@@ -74,17 +175,12 @@ namespace JLChnToZ.IMEHelper {
             }
         }
 
-        public void enableIME() {
-            IsEnabled = true;
-            IMM.ImmAssociateContext(Handle, Context);
-        }
-
         protected override void WndProc(ref Message msg) {
             switch (msg.Msg) {
                 case IMM.ImeSetContext: IMESetContext(ref msg); break;
                 case IMM.InputLanguageChange: return;
-                case IMM.ImeNotify: IMENotify(msg.WParam.ToInt32()); break;
-                case IMM.ImeStartCompostition: IMEStartComposion(msg.LParam.ToInt32()); break;
+                case IMM.ImeNotify: IMENotify(msg.WParam.ToInt32()); if(!_showIMEWin) return; break;
+                case IMM.ImeStartCompostition: IMEStartComposion(msg.LParam.ToInt32()); if(!_showIMEWin) return; break;
                 case IMM.ImeComposition: IMEComposition(msg.LParam.ToInt32()); break;
                 case IMM.ImeEndComposition: IMEEndComposition(msg.LParam.ToInt32()); break;
                 case IMM.Char: CharEvent(msg.WParam.ToInt32()); break;
@@ -92,17 +188,37 @@ namespace JLChnToZ.IMEHelper {
             base.WndProc(ref msg);
         }
 
+        private void ClearComposition() {
+            CompositionString.clear();
+            CompositionClause.clear();
+            CompositionReadString.clear();
+            CompositionReadClause.clear();
+        }
+
+        private void ClearResult() {
+            ResultString.clear();
+            ResultClause.clear();
+            ResultReadString.clear();
+            ResultReadClause.clear();
+        }
+
         #region IME Message Handlers
         private void IMESetContext(ref Message msg) {
             if (msg.WParam.ToInt32() == 1) {
                 IntPtr ptr = IMM.ImmGetContext(Handle);
-                if (Context == IntPtr.Zero)
-                    Context = ptr;
-                CompositionCursorPos.IMEHandle = Context;
-                CompositionString.IMEHandle = Context;
-                ResultString.IMEHandle = Context;
-                if (ptr == IntPtr.Zero && IsEnabled)
+                if (_context == IntPtr.Zero)
+                    _context = ptr;
+                else if (ptr == IntPtr.Zero && IsEnabled)
                     enableIME();
+                CompositionCursorPos.IMEHandle = _context;
+                CompositionString.IMEHandle = _context;
+                CompositionClause.IMEHandle = _context;
+                CompositionReadString.IMEHandle = _context;
+                CompositionReadClause.IMEHandle = _context;
+                ResultString.IMEHandle = _context;
+                ResultClause.IMEHandle = _context;
+                ResultReadString.IMEHandle = _context;
+                ResultReadClause.IMEHandle = _context;
                 if (!_showIMEWin)
                     msg.LParam = (IntPtr)0;
             }
@@ -114,14 +230,15 @@ namespace JLChnToZ.IMEHelper {
                 case IMM.ImnChangeCandidate: IMEChangeCandidate(); break;
                 case IMM.ImnCloseCandidate: IMECloseCandidate(); break;
                 case IMM.ImnPrivate: break;
+                default: break;
             }
         }
 
         private void IMEChangeCandidate() {
-            uint length = IMM.ImmGetCandidateList(Context, 0, IntPtr.Zero, 0);
+            uint length = IMM.ImmGetCandidateList(_context, 0, IntPtr.Zero, 0);
             if (length > 0) {
                 IntPtr pointer = Marshal.AllocHGlobal((int)length);
-                length = IMM.ImmGetCandidateList(Context, 0, pointer, length);
+                length = IMM.ImmGetCandidateList(_context, 0, pointer, length);
                 IMM.CandidateList cList =
                     (IMM.CandidateList)Marshal.PtrToStructure(pointer, typeof(IMM.CandidateList));
                 CandidatesSelection = cList.dwSelection;
@@ -149,23 +266,30 @@ namespace JLChnToZ.IMEHelper {
         }
 
         private void IMEStartComposion(int lParam) {
-            CompositionString.clear();
-            ResultString.clear();
+            ClearComposition();
+            ClearResult();
             if (onCompositionReceived != null)
                 onCompositionReceived(this, EventArgs.Empty);
         }
 
         private void IMEComposition(int lParam) {
-            bool result = false;
-            result = result || CompositionString.update(lParam);
-            result = result || CompositionCursorPos.update(lParam);
-            if (result && onCompositionReceived != null)
-                onCompositionReceived(this, EventArgs.Empty);
+            if (CompositionString.update(lParam)) {
+                CompositionClause.update();
+                CompositionReadString.update();
+                CompositionReadClause.update();
+                CompositionCursorPos.update();
+                if (onCompositionReceived != null)
+                    onCompositionReceived(this, EventArgs.Empty);
+            }
         }
 
         private void IMEEndComposition(int lParam) {
-            CompositionString.clear();
-            ResultString.update(lParam);
+            ClearComposition();
+            if (ResultString.update(lParam)) {
+                ResultClause.update();
+                ResultReadString.update();
+                ResultReadClause.update();
+            }
             if (onCompositionReceived != null)
                 onCompositionReceived(this, EventArgs.Empty);
         }
