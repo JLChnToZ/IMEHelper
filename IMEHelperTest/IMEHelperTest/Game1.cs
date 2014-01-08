@@ -106,7 +106,7 @@ namespace IMEHelperTest {
                 i < Math.Min(handler.CandidatesPageStart + handler.CandidatesPageSize, handler.Candidates.Length);
                 i++) {
                 spriteBatch.DrawString(font1,
-                    String.Format("{0}.{1}", i + 1, handler.Candidates[i]),
+                    String.Format("{0}.{1}", i + 1 - handler.CandidatesPageStart, handler.Candidates[i]),
                     new Vector2(15 + len.X, 50 + (i - handler.CandidatesPageStart) * 20),
                     i == handler.CandidatesSelection ? Color.Yellow : Color.White);
             }

@@ -23,7 +23,9 @@ namespace JLChnToZ.IMEHelper {
     internal static class IMM {
 
         #region Constants
-        public const int Char = 0x0102;
+        public const int
+            KeyDown = 0x0100,
+            Char = 0x0102;
 
         public const int
             GCSCompReadStr = 0x0001,
@@ -71,8 +73,6 @@ namespace JLChnToZ.IMEHelper {
             ImnPrivate = 0x000E;
 
         public const int InputLanguageChange = 0x0051;
-
-        public const int KeyDown = 0x0100;
         #endregion
 
         [DllImport("imm32.dll", SetLastError = true)]

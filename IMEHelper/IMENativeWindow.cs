@@ -38,6 +38,9 @@ namespace JLChnToZ.IMEHelper {
         public char result { get; private set; }
     }
 
+    /// <summary>
+    /// Native window class that handles IME.
+    /// </summary>
     public sealed class IMENativeWindow : NativeWindow, IDisposable {
         /// <summary>
         /// Gets the state if the IME should be enabled

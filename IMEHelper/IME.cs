@@ -20,7 +20,7 @@ using Microsoft.Xna.Framework;
 
 namespace JLChnToZ.IMEHelper {
     /// <summary>
-    /// 整合 IME 到 XNA Framework
+    /// Integrate IME to XNA framework.
     /// </summary>
     public class IMEHandler {
         private IMENativeWindow _nativeWnd;
