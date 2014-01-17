@@ -39,6 +39,9 @@ namespace JLChnToZ.IMEHelper {
             _nativeWnd.onResultReceived += (s, e) => { if (onResultReceived != null) onResultReceived(s, e); };
         }
 
+        /// <summary>
+        /// Corrected mouse / keyboard state
+        /// </summary>
         public InputRemapper Input { get; private set; }
 
         /// <summary>

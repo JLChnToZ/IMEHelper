@@ -98,6 +98,7 @@
     <Compile Include="IMENativeWindow.cs" />
     <Compile Include="IMMCompositionResultHandler.cs" />
     <Compile Include="IMMNativeMethods.cs" />
+    <Compile Include="InputRemapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
