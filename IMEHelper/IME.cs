@@ -32,11 +32,14 @@ namespace JLChnToZ.IMEHelper {
         /// <param name="showDefaultIMEWindow">Should display system IME windows.</param>
         public IMEHandler(Game game, bool showDefaultIMEWindow = false) {
             this.GameInstance = game;
+            Input = new InputRemapper(game);
             _nativeWnd = new IMENativeWindow(game.Window.Handle, showDefaultIMEWindow);
             _nativeWnd.onCandidatesReceived += (s, e) => { if (onCandidatesReceived != null) onCandidatesReceived(s, e); };
             _nativeWnd.onCompositionReceived += (s, e) => { if (onCompositionReceived != null) onCompositionReceived(s, e); };
             _nativeWnd.onResultReceived += (s, e) => { if (onResultReceived != null) onResultReceived(s, e); };
         }
+
+        public InputRemapper Input { get; private set; }
 
         /// <summary>
         /// Called when the candidates updated
