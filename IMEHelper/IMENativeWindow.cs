@@ -255,9 +255,9 @@ namespace JLChnToZ.IMEHelper {
                     }
                     if (onCandidatesReceived != null)
                         onCandidatesReceived(this, EventArgs.Empty);
-                }
-                else
+                } else
                     IMECloseCandidate();
+                Marshal.FreeHGlobal(pointer);
             }
         }
 
