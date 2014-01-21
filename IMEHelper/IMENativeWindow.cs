@@ -17,9 +17,7 @@
  */
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
-using Microsoft.Xna.Framework;
 
 namespace JLChnToZ.IMEHelper {
 
