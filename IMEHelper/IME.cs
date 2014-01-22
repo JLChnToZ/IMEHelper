@@ -102,7 +102,7 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// Caret position of the composition
         /// </summary>
-        public int CompositionCursorPos { get { return _nativeWnd.CompositionCursorPos.result; } }
+        public int CompositionCursorPos { get { return _nativeWnd.CompositionCursorPos.Value; } }
 
         /// <summary>
         /// Result String

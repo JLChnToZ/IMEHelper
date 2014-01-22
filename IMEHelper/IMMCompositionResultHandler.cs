@@ -17,6 +17,7 @@
 */
 using System;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace JLChnToZ.IMEHelper {
     /// <summary>
@@ -27,22 +28,55 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// The result flag that this class will be handled
         /// </summary>
-        public int flag { get; private set; }
+        public int Flag { get; private set; }
 
         internal IMMCompositionResultHandler(int flag) {
-            this.flag = flag;
+            this.Flag = flag;
             this.IMEHandle = IntPtr.Zero;
         }
 
         internal virtual void update() { }
 
         internal bool update(int lParam) {
-            if ((lParam & flag) == flag) {
+            if ((lParam & Flag) == Flag) {
                 update();
                 return true;
             }
             return false;
         }
+    }
+
+    public class IMMCompositionIntArray : IMMCompositionResultHandler {
+        private int[] array;
+
+        public int Length { get; private set; }
+
+        public int[] Values { get { return array; } }
+
+        public int this[int index] { get { return array[index]; } }
+
+        internal IMMCompositionIntArray(int flag)
+            : base(flag) {
+                clear();
+        }
+
+        internal void clear() {
+            array = new int[0];
+        }
+
+        internal override void update() {
+            Length = IMM.ImmGetCompositionString(IMEHandle, Flag, null, 0);
+            IntPtr pointer = Marshal.AllocHGlobal(Length);
+            try {
+                IMM.ImmGetCompositionString(IMEHandle, Flag, pointer, Length);
+                array = new int[Length / Marshal.SizeOf(typeof(int))];
+                Marshal.Copy(pointer, array, 0, array.Length);
+            } finally {
+                Marshal.FreeHGlobal(pointer);
+            }
+        }
+
+
     }
 
     /// <summary>
@@ -53,7 +87,7 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// The length of the result.
         /// </summary>
-        public int resultLength { get; private set; }
+        public int Length { get; private set; }
 
         /// <summary>
         /// Gets the string of the result.
@@ -61,12 +95,12 @@ namespace JLChnToZ.IMEHelper {
         /// <returns>String of the result</returns>
         public override string ToString() {
             if (resultHandler.Length <= 0) return string.Empty;
-            return resultHandler.ToString(0, Math.Min(resultLength / 2, resultHandler.Length));
+            return resultHandler.ToString(0, Math.Min(Length / 2, resultHandler.Length));
         }
 
         internal IMMCompositionString(int flag) : base(flag) {
             this.resultHandler = new StringBuilder();
-            this.resultLength = 0;
+            this.Length = 0;
         }
 
         internal void clear() {
@@ -75,8 +109,8 @@ namespace JLChnToZ.IMEHelper {
 
         internal override void update() {
             clear();
-            resultLength = IMM.ImmGetCompositionString(IMEHandle, flag, null, 0);
-            IMM.ImmGetCompositionString(IMEHandle, flag, resultHandler, resultLength);
+            Length = IMM.ImmGetCompositionString(IMEHandle, Flag, null, 0);
+            IMM.ImmGetCompositionString(IMEHandle, Flag, resultHandler, Length);
         }
     }
 
@@ -87,7 +121,7 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// The result.
         /// </summary>
-        public int result { get; private set; }
+        public int Value { get; private set; }
 
         internal IMMCompositionInt(int flag) : base(flag) { }
 
@@ -96,11 +130,11 @@ namespace JLChnToZ.IMEHelper {
         /// </summary>
         /// <returns>Result in string form</returns>
         public override string ToString() {
-            return result.ToString();
+            return Value.ToString();
         }
 
         internal override void update() {
-            result = IMM.ImmGetCompositionString(IMEHandle, flag, null, 0);
+            Value = IMM.ImmGetCompositionString(IMEHandle, Flag, null, 0);
         }
     }
 }

@@ -84,6 +84,9 @@ namespace JLChnToZ.IMEHelper {
         [DllImport("imm32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern int ImmGetCompositionString(IntPtr hIMC, int CompositionStringFlag, StringBuilder buffer, int bufferLength);
 
+        [DllImport("imm32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern int ImmGetCompositionString(IntPtr hIMC, int CompositionStringFlag, IntPtr buffer, int bufferLength);
+
         [DllImport("imm32.dll", SetLastError = true)]
         public static extern IntPtr ImmGetContext(IntPtr hWnd);
 
