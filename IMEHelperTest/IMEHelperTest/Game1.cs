@@ -104,8 +104,8 @@ namespace IMEHelperTest {
             Vector2 len = font1.MeasureString(content);
             spriteBatch.DrawString(font1, "按下 F12 啟用 / 停用 IME", new Vector2(10, 10), Color.White);
             spriteBatch.DrawString(font1, content, new Vector2(10, 30), Color.White);
-            Vector2 drawPos = new Vector2(15 + len.X, 30);
-            Vector2 measStr = new Vector2(0, 15);
+            Vector2 drawPos = new Vector2(len.X + 10, 30);
+            Vector2 measStr = new Vector2(0, 18);
             Color compColor = Color.White;
             if (handler.CompositionCursorPos == 0)
                 spriteBatch.Draw(whitePixel, new Rectangle((int)drawPos.X, (int)drawPos.Y, 1, (int)measStr.Y), Color.White);
@@ -130,12 +130,12 @@ namespace IMEHelperTest {
             uint sel = handler.CandidatesSelection;
             if (startIndex + size <= sel || startIndex > sel)
                 startIndex = sel;
-            for (uint i = handler.CandidatesPageStart;
-                i < Math.Min(handler.CandidatesPageStart + handler.CandidatesPageSize, handler.Candidates.Length);
+            for (uint i = startIndex;
+                i < Math.Min(startIndex + size, handler.Candidates.Length);
                 i++) {
                 spriteBatch.DrawString(font1,
-                    String.Format("{0}.{1}", i + 1 - handler.CandidatesPageStart, handler.Candidates[i]),
-                    new Vector2(15 + len.X, 50 + (i - handler.CandidatesPageStart) * 20),
+                    String.Format("{0}.{1}", i + 1 - startIndex, handler.Candidates[i]),
+                    new Vector2(len.X + 10, 50 + (i - startIndex) * 20),
                     i == handler.CandidatesSelection ? Color.Yellow : Color.White);
             }
             spriteBatch.End();

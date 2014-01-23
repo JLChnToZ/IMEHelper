@@ -1,31 +1,52 @@
-﻿using System;
+﻿/* 
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) NyaRuRu
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+using System;
 using System.Runtime.InteropServices;
 using TSF;
 
 namespace JLChnToZ.IMEHelper.TSF {
     internal class TSFSink : ITfUIElementSink, IDisposable {
-
-        CTfThreadMgr tfThreadMgr;
-        uint SinkCookie = 0;
+        private CTfThreadMgr tfThreadMgr;
+        private uint SinkCookie = 0;
+        private bool showWindow;
 
         public string[] Candidates { get; private set; }
         public uint SelectedIndex { get; private set; }
-
+        
         public event EventHandler onUpdate;
 
-        public TSFSink() {
-            tfThreadMgr = CTfThreadMgr.GetThreadMgr();
+        public TSFSink(bool showWindow = false) {
             Guid guid = typeof(ITfUIElementSink).GUID;
-            tfThreadMgr.Source.AdviseSink(ref guid, this, out SinkCookie);
-            SelectedIndex = 0;
-            Candidates = new string[0];
-            System.Diagnostics.Debug.Print("Cookie: {0}", SinkCookie);
+            this.tfThreadMgr = CTfThreadMgr.GetThreadMgr();
+            this.tfThreadMgr.Source.AdviseSink(ref guid, this, out SinkCookie);
+            this.showWindow = showWindow;
+            this.SelectedIndex = 0;
+            this.Candidates = new string[0];
         }
 
         public void BeginUIElement(uint id, ref bool show) {
-            show = false;
+            show = showWindow;
             OnUIElement(id, true);
-            System.Diagnostics.Debug.Print("Begin UI Element");
         }
 
         public void EndUIElement(uint id) {
@@ -33,12 +54,10 @@ namespace JLChnToZ.IMEHelper.TSF {
             Candidates = new string[0];
             if (onUpdate != null)
                 onUpdate(this, EventArgs.Empty);
-            System.Diagnostics.Debug.Print("End UI Element");
         }
 
         public void UpdateUIElement(uint id) {
             OnUIElement(id, false);
-            System.Diagnostics.Debug.Print("Update UI Element");
         }
 
         void OnUIElement(uint id, bool start) {
@@ -59,14 +78,11 @@ namespace JLChnToZ.IMEHelper.TSF {
                     cList.GetSelection(out currentIndex);
                     SelectedIndex = currentIndex;
                 }
-            } catch(ExternalException ex) {
-                
-                System.Diagnostics.Debug.Print("Error:{0}", ex.ErrorCode);
+            } catch(ExternalException) {
             } finally {
                 if (uiElement != null)
                     Marshal.ReleaseComObject(uiElement);
             }
-            System.Diagnostics.Debug.Print("Candidates Count: {0}, sel: {1}", Candidates.Length, SelectedIndex);
             if (onUpdate != null)
                 onUpdate(this, EventArgs.Empty);
         }

@@ -211,7 +211,7 @@ namespace JLChnToZ.IMEHelper {
             AssignHandle(handle);
             CharMessageFilter.AddFilter();
             try {
-                this._sink = new TSF.TSFSink();
+                this._sink = new TSF.TSFSink(showDefaultIMEWindow);
                 this._sink.onUpdate += onTSFUpdate;
                 this.hasTSFUpdate = false;
             } catch { }
@@ -248,9 +248,9 @@ namespace JLChnToZ.IMEHelper {
         /// Dispose everything
         /// </summary>
         public void Dispose() {
+            if (_sink != null)
+                _sink.Dispose();
             if (!_disposed) {
-                if (_sink != null)
-                    _sink.Dispose();
                 ReleaseHandle();
                 _disposed = true;
             }
