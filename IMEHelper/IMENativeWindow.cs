@@ -81,6 +81,8 @@ namespace JLChnToZ.IMEHelper {
         private IMMCompositionInt _compcurpos;
         private bool _disposed, _showIMEWin;
         private IntPtr _context;
+        private TSF.TSFSink _sink;
+        private bool hasTSFUpdate;
 
         /// <summary>
         /// Gets the state if the IME should be enabled
@@ -193,6 +195,7 @@ namespace JLChnToZ.IMEHelper {
         public IMENativeWindow(IntPtr handle, bool showDefaultIMEWindow = false) {
             this._context = IntPtr.Zero;
             this.Candidates = new string[0];
+            this.CandidatesSelection = this.CandidatesPageStart = this.CandidatesPageSize = 0;
             this._compcurpos = new IMMCompositionInt(IMM.GCSCursorPos);
             this._compstr = new IMMCompositionString(IMM.GCSCompStr);
             this._compclause = new IMMCompositionString(IMM.GCSCompClause);
@@ -207,6 +210,22 @@ namespace JLChnToZ.IMEHelper {
             this._showIMEWin = showDefaultIMEWindow;
             AssignHandle(handle);
             CharMessageFilter.AddFilter();
+            try {
+                this._sink = new TSF.TSFSink();
+                this._sink.onUpdate += onTSFUpdate;
+                this.hasTSFUpdate = false;
+            } catch { }
+        }
+
+        private void onTSFUpdate(object sender, EventArgs e) {
+            if (_sink == null) return;
+            hasTSFUpdate = true;
+            Candidates = _sink.Candidates;
+            CandidatesPageSize = 9;
+            CandidatesPageStart = _sink.SelectedIndex / 9 * 9;
+            CandidatesSelection = _sink.SelectedIndex;
+            if (onCandidatesReceived != null)
+                onCandidatesReceived(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -230,6 +249,8 @@ namespace JLChnToZ.IMEHelper {
         /// </summary>
         public void Dispose() {
             if (!_disposed) {
+                if (_sink != null)
+                    _sink.Dispose();
                 ReleaseHandle();
                 _disposed = true;
             }
@@ -299,6 +320,10 @@ namespace JLChnToZ.IMEHelper {
         }
 
         private void IMEChangeCandidate() {
+            if (hasTSFUpdate) {
+                hasTSFUpdate = false;
+                return;
+            }
             uint length = IMM.ImmGetCandidateList(_context, 0, IntPtr.Zero, 0);
             if (length > 0) {
                 IntPtr pointer = Marshal.AllocHGlobal((int)length);
@@ -319,7 +344,8 @@ namespace JLChnToZ.IMEHelper {
                 } else
                     IMECloseCandidate();
                 Marshal.FreeHGlobal(pointer);
-            }
+            } else
+                IMECloseCandidate();
         }
 
         private void IMECloseCandidate() {

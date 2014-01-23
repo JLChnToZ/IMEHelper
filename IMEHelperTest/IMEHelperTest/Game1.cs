@@ -125,6 +125,11 @@ namespace IMEHelperTest {
                 if ((i + 1) == handler.CompositionCursorPos)
                     spriteBatch.Draw(whitePixel, new Rectangle((int)drawPos.X, (int)drawPos.Y, 1, (int)measStr.Y), Color.White);
             }
+            uint startIndex = handler.CandidatesPageStart;
+            uint size = handler.CandidatesPageSize;
+            uint sel = handler.CandidatesSelection;
+            if (startIndex + size <= sel || startIndex > sel)
+                startIndex = sel;
             for (uint i = handler.CandidatesPageStart;
                 i < Math.Min(handler.CandidatesPageStart + handler.CandidatesPageSize, handler.Candidates.Length);
                 i++) {
