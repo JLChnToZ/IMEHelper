@@ -50,7 +50,7 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// Characters that the IME will no longer convert.
         /// </summary>
-        FixedConveted = 0x05,
+        FixedConverted = 0x05,
     }
 
     /// <summary>

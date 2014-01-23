@@ -113,7 +113,7 @@ namespace IMEHelperTest {
                 string val = handler.Composition[i].ToString();
                 switch (handler.GetCompositionAttr(i)) {
                     case CompositionAttributes.Converted: compColor = Color.LightGreen; break;
-                    case CompositionAttributes.FixedConveted: compColor = Color.Gray; break;
+                    case CompositionAttributes.FixedConverted: compColor = Color.Gray; break;
                     case CompositionAttributes.Input: compColor = Color.Orange; break;
                     case CompositionAttributes.InputError: compColor = Color.Red; break;
                     case CompositionAttributes.TargetConverted: compColor = Color.Yellow; break;
