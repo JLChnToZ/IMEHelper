@@ -22,7 +22,7 @@ namespace JLChnToZ.IMEHelper {
     /// <summary>
     /// Integrate IME to XNA framework.
     /// </summary>
-    public class IMEHandler {
+    public class IMEHandler: IDisposable {
         private IMENativeWindow _nativeWnd;
         
         /// <summary>
@@ -37,6 +37,7 @@ namespace JLChnToZ.IMEHelper {
             _nativeWnd.onCandidatesReceived += (s, e) => { if (onCandidatesReceived != null) onCandidatesReceived(s, e); };
             _nativeWnd.onCompositionReceived += (s, e) => { if (onCompositionReceived != null) onCompositionReceived(s, e); };
             _nativeWnd.onResultReceived += (s, e) => { if (onResultReceived != null) onResultReceived(s, e); };
+            game.Exiting += (o, e) => this.Dispose();
         }
 
         /// <summary>
@@ -82,47 +83,47 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// Composition String
         /// </summary>
-        public string Composition { get { return _nativeWnd.CompositionString.ToString(); } }
+        public string Composition { get { return _nativeWnd.CompositionString; } }
 
         /// <summary>
         /// Composition Clause
         /// </summary>
-        public string CompositionClause { get { return _nativeWnd.CompositionClause.ToString(); } }
+        public string CompositionClause { get { return _nativeWnd.CompositionClause; } }
 
         /// <summary>
         /// Composition Reading String
         /// </summary>
-        public string CompositionRead { get { return _nativeWnd.CompositionReadString.ToString(); } }
+        public string CompositionRead { get { return _nativeWnd.CompositionReadString; } }
 
         /// <summary>
         /// Composition Reading Clause
         /// </summary>
-        public string CompositionReadClause { get { return _nativeWnd.CompositionReadClause.ToString(); } }
+        public string CompositionReadClause { get { return _nativeWnd.CompositionReadClause; } }
 
         /// <summary>
         /// Caret position of the composition
         /// </summary>
-        public int CompositionCursorPos { get { return _nativeWnd.CompositionCursorPos.Value; } }
+        public int CompositionCursorPos { get { return _nativeWnd.CompositionCursorPos; } }
 
         /// <summary>
         /// Result String
         /// </summary>
-        public string Result { get { return _nativeWnd.ResultString.ToString(); } }
+        public string Result { get { return _nativeWnd.ResultString; } }
 
         /// <summary>
         /// Result Clause
         /// </summary>
-        public string ResultClause { get { return _nativeWnd.ResultClause.ToString(); } }
+        public string ResultClause { get { return _nativeWnd.ResultClause; } }
 
         /// <summary>
         /// Result Reading String
         /// </summary>
-        public string ResultRead { get { return _nativeWnd.ResultReadString.ToString(); } }
+        public string ResultRead { get { return _nativeWnd.ResultReadString; } }
 
         /// <summary>
         /// Result Reading Clause
         /// </summary>
-        public string ResultReadClause { get { return _nativeWnd.ResultReadClause.ToString(); } }
+        public string ResultReadClause { get { return _nativeWnd.ResultReadClause; } }
 
         /// <summary>
         /// Enable / Disable IME
@@ -143,6 +144,24 @@ namespace JLChnToZ.IMEHelper {
         /// Game Instance
         /// </summary>
         public Game GameInstance { get; private set; }
+
+        /// <summary>
+        /// Get the composition attribute at character index.
+        /// </summary>
+        /// <param name="index">Character Index</param>
+        /// <returns>Composition Attribute</returns>
+        public CompositionAttributes GetCompositionAttr(int index) {
+            return _nativeWnd.GetCompositionAttr(index);
+        }
+
+        /// <summary>
+        /// Get the composition read attribute at character index.
+        /// </summary>
+        /// <param name="index">Character Index</param>
+        /// <returns>Composition Attribute</returns>
+        public CompositionAttributes GetCompositionReadAttr(int index) {
+            return _nativeWnd.GetCompositionReadAttr(index);
+        }
 
         /// <summary>
         /// Dispose everything

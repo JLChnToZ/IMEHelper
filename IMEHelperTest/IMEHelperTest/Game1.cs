@@ -20,6 +20,7 @@ namespace IMEHelperTest {
         SpriteFont font1;
         IMEHandler handler;
         KeyboardState lastState;
+        Texture2D whitePixel;
         string content;
 
 
@@ -65,6 +66,8 @@ namespace IMEHelperTest {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             font1 = Content.Load<SpriteFont>("chi_jp");
+            whitePixel = new Texture2D(GraphicsDevice, 1, 1);
+            whitePixel.SetData<Color>(new Color[] { Color.White });
         }
 
         /// <summary>
@@ -101,7 +104,27 @@ namespace IMEHelperTest {
             Vector2 len = font1.MeasureString(content);
             spriteBatch.DrawString(font1, "按下 F12 啟用 / 停用 IME", new Vector2(10, 10), Color.White);
             spriteBatch.DrawString(font1, content, new Vector2(10, 30), Color.White);
-            spriteBatch.DrawString(font1, handler.Composition, new Vector2(15 + len.X, 30), Color.Yellow);
+            Vector2 drawPos = new Vector2(15 + len.X, 30);
+            Vector2 measStr = new Vector2(0, 15);
+            Color compColor = Color.White;
+            if (handler.CompositionCursorPos == 0)
+                spriteBatch.Draw(whitePixel, new Rectangle((int)drawPos.X, (int)drawPos.Y, 1, (int)measStr.Y), Color.White);
+            for(int i = 0; i < handler.Composition.Length; i++) {
+                string val = handler.Composition[i].ToString();
+                switch (handler.GetCompositionAttr(i)) {
+                    case CompositionAttributes.Converted: compColor = Color.LightGreen; break;
+                    case CompositionAttributes.FixedConveted: compColor = Color.Gray; break;
+                    case CompositionAttributes.Input: compColor = Color.Orange; break;
+                    case CompositionAttributes.InputError: compColor = Color.Red; break;
+                    case CompositionAttributes.TargetConverted: compColor = Color.Yellow; break;
+                    case CompositionAttributes.TargetNotConverted: compColor = Color.SkyBlue; break;
+                }
+                spriteBatch.DrawString(font1, val, drawPos, compColor);
+                measStr = font1.MeasureString(val);
+                drawPos += new Vector2(measStr.X, 0);
+                if ((i + 1) == handler.CompositionCursorPos)
+                    spriteBatch.Draw(whitePixel, new Rectangle((int)drawPos.X, (int)drawPos.Y, 1, (int)measStr.Y), Color.White);
+            }
             for (uint i = handler.CandidatesPageStart;
                 i < Math.Min(handler.CandidatesPageStart + handler.CandidatesPageSize, handler.Candidates.Length);
                 i++) {

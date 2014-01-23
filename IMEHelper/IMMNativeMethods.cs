@@ -20,6 +20,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 namespace JLChnToZ.IMEHelper {
+
     internal static class IMM {
 
         #region Constants
@@ -80,9 +81,6 @@ namespace JLChnToZ.IMEHelper {
 
         [DllImport("imm32.dll", CharSet = CharSet.Unicode)]
         public static extern uint ImmGetCandidateList(IntPtr hIMC, uint deIndex, IntPtr candidateList, uint dwBufLen);
-
-        [DllImport("imm32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern int ImmGetCompositionString(IntPtr hIMC, int CompositionStringFlag, StringBuilder buffer, int bufferLength);
 
         [DllImport("imm32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern int ImmGetCompositionString(IntPtr hIMC, int CompositionStringFlag, IntPtr buffer, int bufferLength);

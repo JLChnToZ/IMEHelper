@@ -20,6 +20,38 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace JLChnToZ.IMEHelper {
+    /// <summary>
+    /// Composition Character Attributes
+    /// </summary>
+    public enum CompositionAttributes {
+        /// <summary>
+        /// Character being entered by the user.
+        /// The IME has yet to convert this character.
+        /// </summary>
+        Input = 0x00,
+        /// <summary>
+        /// Character selected by the user and then converted by the IME.
+        /// </summary>
+        TargetConverted = 0x01,
+        /// <summary>
+        /// Character that the IME has already converted.
+        /// </summary>
+        Converted = 0x02,
+        /// <summary>
+        /// Character being converted. The user has selected this character
+        /// but the IME has not yet converted it.
+        /// </summary>
+        TargetNotConverted = 0x03,
+        /// <summary>
+        /// An error character that the IME cannot convert. For example,
+        /// the IME cannot put together some consonants.
+        /// </summary>
+        InputError = 0x04,
+        /// <summary>
+        /// Characters that the IME will no longer convert.
+        /// </summary>
+        FixedConveted = 0x05,
+    }
 
     /// <summary>
     /// Special event arguemnt class stores new character that IME sends in.
@@ -40,6 +72,16 @@ namespace JLChnToZ.IMEHelper {
     /// Native window class that handles IME.
     /// </summary>
     public sealed class IMENativeWindow : NativeWindow, IDisposable {
+
+        private IMMCompositionString
+            _compstr, _compclause, _compattr,
+            _compread, _compreadclause, _compreadattr,
+            _resstr, _resclause,
+            _resread, _resreadclause;
+        private IMMCompositionInt _compcurpos;
+        private bool _disposed, _showIMEWin;
+        private IntPtr _context;
+
         /// <summary>
         /// Gets the state if the IME should be enabled
         /// </summary>
@@ -48,47 +90,47 @@ namespace JLChnToZ.IMEHelper {
         /// <summary>
         /// Composition String
         /// </summary>
-        public IMMCompositionString CompositionString { get; private set; }
+        public string CompositionString { get { return _compstr.ToString(); } }
 
         /// <summary>
         /// Composition Clause
         /// </summary>
-        public IMMCompositionString CompositionClause { get; private set; }
+        public string CompositionClause { get { return _compclause.ToString(); } }
 
         /// <summary>
         /// Composition String Reads
         /// </summary>
-        public IMMCompositionString CompositionReadString { get; private set; }
+        public string CompositionReadString { get { return _compread.ToString(); } }
 
         /// <summary>
         /// Composition Clause Reads
         /// </summary>
-        public IMMCompositionString CompositionReadClause { get; private set; }
+        public string CompositionReadClause { get { return _compreadclause.ToString(); } }
 
         /// <summary>
         /// Result String
         /// </summary>
-        public IMMCompositionString ResultString { get; private set; }
+        public string ResultString { get { return _resstr.ToString(); } }
 
         /// <summary>
         /// Result Clause
         /// </summary>
-        public IMMCompositionString ResultClause { get; private set; }
+        public string ResultClause { get { return _resclause.ToString(); } }
 
         /// <summary>
         /// Result String Reads
         /// </summary>
-        public IMMCompositionString ResultReadString { get; private set; }
+        public string ResultReadString { get { return _resread.ToString(); } }
 
         /// <summary>
         /// Result Clause Reads
         /// </summary>
-        public IMMCompositionString ResultReadClause { get; private set; }
+        public string ResultReadClause { get { return _resreadclause.ToString(); } }
 
         /// <summary>
         /// Caret position of the composition
         /// </summary>
-        public IMMCompositionInt CompositionCursorPos { get; private set; }
+        public int CompositionCursorPos { get { return _compcurpos.Value; } }
 
         /// <summary>
         /// Array of the candidates
@@ -110,8 +152,23 @@ namespace JLChnToZ.IMEHelper {
         /// </summary>
         public uint CandidatesSelection { get; private set; }
 
-        private bool _disposed, _showIMEWin;
-        private IntPtr _context;
+        /// <summary>
+        /// Get the composition attribute at character index.
+        /// </summary>
+        /// <param name="index">Character Index</param>
+        /// <returns>Composition Attribute</returns>
+        public CompositionAttributes GetCompositionAttr(int index) {
+            return (CompositionAttributes)_compattr[index];
+        }
+
+        /// <summary>
+        /// Get the composition read attribute at character index.
+        /// </summary>
+        /// <param name="index">Character Index</param>
+        /// <returns>Composition Attribute</returns>
+        public CompositionAttributes GetCompositionReadAttr(int index) {
+            return (CompositionAttributes)_compreadattr[index];
+        }
 
         /// <summary>
         /// Called when the candidates updated
@@ -136,15 +193,17 @@ namespace JLChnToZ.IMEHelper {
         public IMENativeWindow(IntPtr handle, bool showDefaultIMEWindow = false) {
             this._context = IntPtr.Zero;
             this.Candidates = new string[0];
-            this.CompositionCursorPos = new IMMCompositionInt(IMM.GCSCursorPos);
-            this.CompositionString = new IMMCompositionString(IMM.GCSCompStr);
-            this.CompositionClause = new IMMCompositionString(IMM.GCSCompClause);
-            this.CompositionReadString = new IMMCompositionString(IMM.GCSCompReadStr);
-            this.CompositionReadClause = new IMMCompositionString(IMM.GCSCompReadClause);
-            this.ResultString = new IMMCompositionString(IMM.GCSResultStr);
-            this.ResultClause = new IMMCompositionString(IMM.GCSResultClause);
-            this.ResultReadString = new IMMCompositionString(IMM.GCSResultReadStr);
-            this.ResultReadClause = new IMMCompositionString(IMM.GCSResultReadClause);
+            this._compcurpos = new IMMCompositionInt(IMM.GCSCursorPos);
+            this._compstr = new IMMCompositionString(IMM.GCSCompStr);
+            this._compclause = new IMMCompositionString(IMM.GCSCompClause);
+            this._compattr = new IMMCompositionString(IMM.GCSCompAttr);
+            this._compread = new IMMCompositionString(IMM.GCSCompReadStr);
+            this._compreadclause = new IMMCompositionString(IMM.GCSCompReadClause);
+            this._compreadattr = new IMMCompositionString(IMM.GCSCompReadAttr);
+            this._resstr = new IMMCompositionString(IMM.GCSResultStr);
+            this._resclause = new IMMCompositionString(IMM.GCSResultClause);
+            this._resread = new IMMCompositionString(IMM.GCSResultReadStr);
+            this._resreadclause = new IMMCompositionString(IMM.GCSResultReadClause);
             this._showIMEWin = showDefaultIMEWindow;
             AssignHandle(handle);
             CharMessageFilter.AddFilter();
@@ -190,17 +249,19 @@ namespace JLChnToZ.IMEHelper {
         }
 
         private void ClearComposition() {
-            CompositionString.clear();
-            CompositionClause.clear();
-            CompositionReadString.clear();
-            CompositionReadClause.clear();
+            _compstr.Clear();
+            _compclause.Clear();
+            _compattr.Clear();
+            _compread.Clear();
+            _compreadclause.Clear();
+            _compreadattr.Clear();
         }
 
         private void ClearResult() {
-            ResultString.clear();
-            ResultClause.clear();
-            ResultReadString.clear();
-            ResultReadClause.clear();
+            _resstr.Clear();
+            _resclause.Clear();
+            _resread.Clear();
+            _resreadclause.Clear();
         }
 
         #region IME Message Handlers
@@ -211,15 +272,17 @@ namespace JLChnToZ.IMEHelper {
                     _context = ptr;
                 else if (ptr == IntPtr.Zero && IsEnabled)
                     enableIME();
-                CompositionCursorPos.IMEHandle = _context;
-                CompositionString.IMEHandle = _context;
-                CompositionClause.IMEHandle = _context;
-                CompositionReadString.IMEHandle = _context;
-                CompositionReadClause.IMEHandle = _context;
-                ResultString.IMEHandle = _context;
-                ResultClause.IMEHandle = _context;
-                ResultReadString.IMEHandle = _context;
-                ResultReadClause.IMEHandle = _context;
+                _compcurpos.IMEHandle = _context;
+                _compstr.IMEHandle = _context;
+                _compclause.IMEHandle = _context;
+                _compattr.IMEHandle = _context;
+                _compread.IMEHandle = _context;
+                _compreadclause.IMEHandle = _context;
+                _compreadattr.IMEHandle = _context;
+                _resstr.IMEHandle = _context;
+                _resclause.IMEHandle = _context;
+                _resread.IMEHandle = _context;
+                _resreadclause.IMEHandle = _context;
                 if (!_showIMEWin)
                     msg.LParam = (IntPtr)0;
             }
@@ -274,11 +337,13 @@ namespace JLChnToZ.IMEHelper {
         }
 
         private void IMEComposition(int lParam) {
-            if (CompositionString.update(lParam)) {
-                CompositionClause.update();
-                CompositionReadString.update();
-                CompositionReadClause.update();
-                CompositionCursorPos.update();
+            if (_compstr.Update(lParam)) {
+                _compclause.Update();
+                _compattr.Update();
+                _compread.Update();
+                _compreadclause.Update();
+                _compreadattr.Update();
+                _compcurpos.Update();
                 if (onCompositionReceived != null)
                     onCompositionReceived(this, EventArgs.Empty);
             }
@@ -286,10 +351,10 @@ namespace JLChnToZ.IMEHelper {
 
         private void IMEEndComposition(int lParam) {
             ClearComposition();
-            if (ResultString.update(lParam)) {
-                ResultClause.update();
-                ResultReadString.update();
-                ResultReadClause.update();
+            if (_resstr.Update(lParam)) {
+                _resclause.Update();
+                _resread.Update();
+                _resreadclause.Update();
             }
             if (onCompositionReceived != null)
                 onCompositionReceived(this, EventArgs.Empty);
