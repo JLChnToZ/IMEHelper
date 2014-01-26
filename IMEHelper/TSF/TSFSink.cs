@@ -36,6 +36,8 @@ namespace JLChnToZ.IMEHelper.TSF {
         public event EventHandler onUpdate;
 
         public TSFSink(bool showWindow = false) {
+            if (System.Threading.Thread.CurrentThread.GetApartmentState() != System.Threading.ApartmentState.STA)
+                System.Diagnostics.Debug.Fail("Warning: TSF will not work if it is not running in STA Thread.");
             Guid guid = typeof(ITfUIElementSink).GUID;
             this.tfThreadMgr = CTfThreadMgr.GetThreadMgr();
             this.tfThreadMgr.Source.AdviseSink(ref guid, this, out SinkCookie);

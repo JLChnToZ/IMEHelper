@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using JLChnToZ.IMEHelper;
+using FontHelper;
 
 namespace IMEHelperTest {
     /// <summary>
@@ -17,7 +18,7 @@ namespace IMEHelperTest {
     public class Game1 : Microsoft.Xna.Framework.Game {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        SpriteFont font1;
+        UniFont font1;
         IMEHandler handler;
         KeyboardState lastState;
         Texture2D whitePixel;
@@ -65,7 +66,7 @@ namespace IMEHelperTest {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            font1 = Content.Load<SpriteFont>("chi_jp");
+            font1 = new UniFont(Content.Load<Texture2D>("glyph"));
             whitePixel = new Texture2D(GraphicsDevice, 1, 1);
             whitePixel.SetData<Color>(new Color[] { Color.White });
         }

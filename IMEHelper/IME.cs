@@ -37,7 +37,8 @@ namespace JLChnToZ.IMEHelper {
             _nativeWnd.onCandidatesReceived += (s, e) => { if (onCandidatesReceived != null) onCandidatesReceived(s, e); };
             _nativeWnd.onCompositionReceived += (s, e) => { if (onCompositionReceived != null) onCompositionReceived(s, e); };
             _nativeWnd.onResultReceived += (s, e) => { if (onResultReceived != null) onResultReceived(s, e); };
-            game.Disposed += (o, e) => this.Dispose();
+            game.Exiting += (s, e) => this.Dispose();
+            game.Disposed += (s, e) => this.Dispose();
         }
 
         /// <summary>
