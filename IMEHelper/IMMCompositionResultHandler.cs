@@ -76,15 +76,8 @@ namespace JLChnToZ.IMEHelper {
         }
 
         internal override void Update() {
-            Length = IMM.ImmGetCompositionString(IMEHandle, Flag, IntPtr.Zero, 0);
-            IntPtr pointer = Marshal.AllocHGlobal(Length);
-            try {
-                IMM.ImmGetCompositionString(IMEHandle, Flag, pointer, Length);
-                _values = new byte[Length];
-                Marshal.Copy(pointer, _values, 0, Length);
-            } finally {
-                Marshal.FreeHGlobal(pointer);
-            }
+            _values = IMM.GetCompositionString(IMEHandle, Flag);
+            Length = _values.Length;
         }
     }
 
@@ -98,7 +91,7 @@ namespace JLChnToZ.IMEHelper {
         }
 
         internal override void Update() {
-            Value = IMM.ImmGetCompositionString(IMEHandle, Flag, IntPtr.Zero, 0);
+            Value = IMM.GetCompositionInt(IMEHandle, Flag);
         }
     }
 }

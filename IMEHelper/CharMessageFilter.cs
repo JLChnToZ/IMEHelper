@@ -38,9 +38,9 @@ namespace JLChnToZ.IMEHelper {
                         Marshal.StructureToPtr(m, intPtr, true);
                         IMM.TranslateMessage(intPtr);
                         return false;
-                    case 0x020A:
+                    case IMM.MouseWheel:
                         // Mouse wheel is not correct if the IME helper is used, thus it is needed to grab the value here.
-                        MouseWheel += (int)(short)((uint)(int)m.WParam >> 16);
+                        MouseWheel += m.WParam.ToInt32() >> 16;
                         return false;
                 }
                 return false;

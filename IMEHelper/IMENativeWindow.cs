@@ -233,7 +233,7 @@ namespace JLChnToZ.IMEHelper {
         /// </summary>
         public void enableIME() {
             IsEnabled = true;
-            IMM.ImmAssociateContext(Handle, _context);
+            IMM.AssociateContext(Handle, _context);
         }
 
         /// <summary>
@@ -241,7 +241,7 @@ namespace JLChnToZ.IMEHelper {
         /// </summary>
         public void disableIME() {
             IsEnabled = false;
-            IMM.ImmAssociateContext(Handle, IntPtr.Zero);
+            IMM.AssociateContext(Handle, IntPtr.Zero);
         }
 
         /// <summary>
@@ -288,7 +288,7 @@ namespace JLChnToZ.IMEHelper {
         #region IME Message Handlers
         private void IMESetContext(ref Message msg) {
             if (msg.WParam.ToInt32() == 1) {
-                IntPtr ptr = IMM.ImmGetContext(Handle);
+                IntPtr ptr = IMM.GetContext(Handle);
                 if (_context == IntPtr.Zero)
                     _context = ptr;
                 else if (ptr == IntPtr.Zero && IsEnabled)
@@ -324,28 +324,18 @@ namespace JLChnToZ.IMEHelper {
                 hasTSFUpdate = false;
                 return;
             }
-            uint length = IMM.ImmGetCandidateList(_context, 0, IntPtr.Zero, 0);
-            if (length > 0) {
-                IntPtr pointer = Marshal.AllocHGlobal((int)length);
-                length = IMM.ImmGetCandidateList(_context, 0, pointer, length);
-                IMM.CandidateList cList =
-                    (IMM.CandidateList)Marshal.PtrToStructure(pointer, typeof(IMM.CandidateList));
-                CandidatesSelection = cList.dwSelection;
-                CandidatesPageStart = cList.dwPageStart;
-                CandidatesPageSize = cList.dwPageSize;
-                if (cList.dwCount > 1) {
-                    Candidates = new string[cList.dwCount];
-                    for (int i = 0; i < cList.dwCount; i++) {
-                        int sOffset = Marshal.ReadInt32(pointer, 24 + 4 * i);
-                        Candidates[i] = Marshal.PtrToStringUni((IntPtr)(pointer.ToInt32() + sOffset));
-                    }
-                    if (onCandidatesReceived != null)
-                        onCandidatesReceived(this, EventArgs.Empty);
-                } else
-                    IMECloseCandidate();
-                Marshal.FreeHGlobal(pointer);
-            } else
+            IMM.CandidateList cList = IMM.GetCandidateList(_context, 0);
+            CandidatesSelection = cList.Selection;
+            CandidatesPageStart = cList.PageStart;
+            CandidatesPageSize = cList.PageSize;
+            if (cList.Candidates == null) {
+                Candidates = new string[0];
                 IMECloseCandidate();
+            } else {
+                Candidates = cList.Candidates;
+                if (onCandidatesReceived != null)
+                    onCandidatesReceived(this, EventArgs.Empty);
+            }
         }
 
         private void IMECloseCandidate() {

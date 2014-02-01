@@ -100,6 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CharMessageFilter.cs" />
+    <Compile Include="SafePointer.cs" />
     <Compile Include="TSF\CTfThreadMgr.cs" />
     <Compile Include="IME.cs" />
     <Compile Include="IMENativeWindow.cs" />
