@@ -114,7 +114,7 @@ namespace JLChnToZ.IMEHelper {
                     output.Candidates = new string[_list.cnt];
                     for (int i = 0; i < _list.cnt; i++) {
                         int sOffset = Marshal.ReadInt32(_ptr.Pointer, 24 + 4 * i);
-                        output.Candidates[i] = Marshal.PtrToStringUni(_ptr.GetOffsetPointer(sOffset));
+                        output.Candidates[i] = Marshal.PtrToStringUni(_ptr.Pointer + sOffset);
                     }
                 }
             return output;

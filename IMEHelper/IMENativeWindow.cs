@@ -305,7 +305,7 @@ namespace JLChnToZ.IMEHelper {
                 _resread.IMEHandle = _context;
                 _resreadclause.IMEHandle = _context;
                 if (!_showIMEWin)
-                    msg.LParam = (IntPtr)0;
+                    msg.LParam = IntPtr.Zero;
             }
         }
 
