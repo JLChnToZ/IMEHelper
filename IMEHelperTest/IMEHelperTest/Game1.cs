@@ -67,6 +67,7 @@ namespace IMEHelperTest {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             font1 = new UniFont(Content.Load<Texture2D>("glyph"));
+            font1.setSizes(System.IO.File.ReadAllBytes(Content.RootDirectory + "/glyphsize.bin")); // Load Glyph Sizes
             whitePixel = new Texture2D(GraphicsDevice, 1, 1);
             whitePixel.SetData<Color>(new Color[] { Color.White });
         }

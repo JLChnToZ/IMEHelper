@@ -30,6 +30,7 @@ namespace FontHelper {
 
     public class UniFont {
         private Texture2D baseTexture;
+        private byte[] sizes;
         public const int fontBaseSize = 16;
         public const int glyphColumnSize = 256;
 
@@ -37,15 +38,24 @@ namespace FontHelper {
             this.baseTexture = baseTexture;
         }
 
-        public bool isFullWidth(char c) {
+        public void setSizes(byte[] sizes) {
+            this.sizes = sizes;
+        }
+
+        public int getWidth(char c) {
             uint i = (uint)c;
-            if (i >= 0x0000 && i < 0x024F) return false;
-            if (i >= 0x0370 && i < 0x03FF) return false;
-            if (i >= 0x0400 && i < 0x052F) return false;
-            if (i >= 0xFB29 && i < 0xFCDD) return false;
-            if (i >= 0xFE50 && i < 0xFE6F) return false;
-            if (i >= 0xFF60 && i < 0xFF91) return false;
-            return true; // Stub
+            if (c == ' ') return fontBaseSize / 2;
+            if (i < sizes.Length) {
+                if (sizes[i] == 0) return 0;
+                int sz1 = (int)(((uint)sizes[i]) >> 4);
+                int sz2 = (int)(((uint)sizes[i]) & 15);
+                if (sz2 > 7) {
+                    sz2 = 15;
+                    sz1 = 0;
+                }
+                return sz2 - sz1 + 2;
+            }
+            return fontBaseSize; // Stub
         }
 
         public Vector2 MeasureString(string content) {
@@ -60,8 +70,7 @@ namespace FontHelper {
                         Height += fontBaseSize;
                         break;
                     default:
-                        if (isFullWidth(c)) Width += fontBaseSize;
-                        else Width += fontBaseSize / 2;
+                        Width += getWidth(c);
                         break;
                 }
             }
@@ -91,7 +100,7 @@ namespace FontHelper {
                             Vector2.Transform(new Vector2(curX, curY), transform) + position,
                             new Rectangle(posX * fontBaseSize, posY * fontBaseSize, fontBaseSize, fontBaseSize),
                             color.Value, rotation, Vector2.Zero, scale.Value.X, SpriteEffects.None, depth);
-                        curX += isFullWidth(c) ? fontBaseSize : fontBaseSize / 2;
+                        curX += getWidth(c);
                         if (curX >= clippingsize.Value.X) {
                             curX = 0;
                             curY += fontBaseSize;
